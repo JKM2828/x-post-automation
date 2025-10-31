@@ -32,16 +32,18 @@ async def generate_tweet_variants(
             include_cta=request.include_cta
         )
         
-        # Save as drafts
-        for variant in variants:
-            tweet = models.Tweet(
+        # Save as drafts (batch operation)
+        tweets = [
+            models.Tweet(
                 user_id=current_user.id,
                 text=variant['text'],
                 generated_by_ai=True,
                 viral_score=variant.get('viral_score'),
                 status="draft"
             )
-            db.add(tweet)
+            for variant in variants
+        ]
+        db.bulk_save_objects(tweets)
         db.commit()
         
         return {"variants": variants, "metadata": {"topic": request.topic, "tone": request.tone}}

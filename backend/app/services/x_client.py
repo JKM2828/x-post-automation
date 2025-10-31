@@ -11,6 +11,9 @@ class TwitterAPIClient:
     Much cheaper alternative to official X API v2
     """
     
+    # Request timeout in seconds (connect timeout, read timeout)
+    TIMEOUT = (5, 30)
+    
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://api.twitterapi.io"
@@ -27,7 +30,7 @@ class TwitterAPIClient:
             payload["media_ids"] = media_ids
         
         try:
-            response = requests.post(url, json=payload, headers=self.headers)
+            response = requests.post(url, json=payload, headers=self.headers, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -39,7 +42,7 @@ class TwitterAPIClient:
         params = {"userName": username, "count": count}
         
         try:
-            response = requests.get(url, params=params, headers=self.headers)
+            response = requests.get(url, params=params, headers=self.headers, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json().get("tweets", [])
         except requests.exceptions.RequestException as e:
@@ -51,7 +54,7 @@ class TwitterAPIClient:
         params = {"tweetId": tweet_id}
         
         try:
-            response = requests.get(url, params=params, headers=self.headers)
+            response = requests.get(url, params=params, headers=self.headers, timeout=self.TIMEOUT)
             response.raise_for_status()
             data = response.json()
             
