@@ -17,8 +17,11 @@ async def get_current_user(
     """
     Dependency to get current authenticated user from JWT token.
     
-    For now, this is a simplified version that should be replaced with
-    proper JWT token validation in production.
+    WARNING: This is a PLACEHOLDER implementation for development only!
+    TODO: Implement proper JWT token validation before production use.
+    
+    Current behavior (INSECURE): Treats bearer token as username without validation.
+    Production needs: Proper JWT signing, verification, expiration checks, etc.
     """
     token = credentials.credentials
     

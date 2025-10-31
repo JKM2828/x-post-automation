@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "X Post Automation"
     DEBUG: bool = False
+    # WARNING: Change this in production! Use a strong random key from environment variable
     SECRET_KEY: str = "your-secret-key-change-in-production"
     
     # Redis (for Celery)
