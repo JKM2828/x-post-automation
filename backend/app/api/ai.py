@@ -7,6 +7,7 @@ from app import models, schemas
 from app.auth.dependencies import get_current_user
 from app.services.ai_generator import get_ai_generator
 from app.config import settings
+from app.utils import handle_api_error
 
 router = APIRouter()
 
@@ -47,7 +48,7 @@ async def generate_tweet_variants(
         return {"variants": variants, "metadata": {"topic": request.topic, "tone": request.tone}}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+        raise handle_api_error(e, "AI generation failed", 500)
 
 
 @router.post("/analyze")
@@ -57,4 +58,4 @@ async def analyze_tweet(text: str, current_user: models.User = Depends(get_curre
         ai_generator = get_ai_generator()
         return ai_generator.analyze_tweet_sentiment(text)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise handle_api_error(e, "Tweet analysis failed", 500)

@@ -6,6 +6,53 @@ import random
 from app.config import settings
 
 
+def extract_json_from_text(text: str) -> Optional[str]:
+    """
+    Extract JSON array or object from text response.
+    
+    Args:
+        text: Text containing JSON
+        
+    Returns:
+        JSON string or None if not found
+    """
+    start = text.find('[')
+    end = text.rfind(']') + 1
+    
+    if start >= 0 and end > start:
+        return text[start:end]
+    
+    # Try to find JSON object
+    start = text.find('{')
+    end = text.rfind('}') + 1
+    
+    if start >= 0 and end > start:
+        return text[start:end]
+    
+    return None
+
+
+def parse_json_safely(text: str, default=None):
+    """
+    Safely parse JSON from text with fallback.
+    
+    Args:
+        text: Text to parse
+        default: Default value if parsing fails
+        
+    Returns:
+        Parsed JSON or default value
+    """
+    try:
+        json_str = extract_json_from_text(text)
+        if json_str:
+            return json.loads(json_str)
+    except json.JSONDecodeError:
+        pass
+    
+    return default
+
+
 class GeminiAIGenerator:
     """
     AI content generator using Google Gemini API
@@ -81,22 +128,13 @@ Viral score = predicted engagement potential (0-1)"""
     def _parse_response(self, response_text: str, num_variants: int) -> List[Dict]:
         """Parse Gemini response and extract tweets"""
         
-        try:
-            # Try to extract JSON from response
-            start = response_text.find('[')
-            end = response_text.rfind(']') + 1
-            
-            if start >= 0 and end > start:
-                json_str = response_text[start:end]
-                variants = json.loads(json_str)
-                
-                # Validate and limit
-                return variants[:num_variants]
-            else:
-                # Fallback: split by newlines
-                return self._fallback_parse(response_text, num_variants)
-                
-        except json.JSONDecodeError:
+        variants = parse_json_safely(response_text)
+        
+        if variants and isinstance(variants, list):
+            # Validate and limit
+            return variants[:num_variants]
+        else:
+            # Fallback: split by newlines
             return self._fallback_parse(response_text, num_variants)
     
     def _fallback_parse(self, text: str, num_variants: int) -> List[Dict]:
@@ -128,7 +166,14 @@ Respond with JSON:
         
         try:
             response = self.model.generate_content(prompt)
-            return json.loads(response.text)
+            result = parse_json_safely(response.text, {})
+            
+            # Return parsed result or default
+            return result if result else {
+                "sentiment": "neutral",
+                "engagement_score": 0.5,
+                "suggestions": "N/A"
+            }
         except:
             return {"sentiment": "neutral", "engagement_score": 0.5, "suggestions": "N/A"}
 

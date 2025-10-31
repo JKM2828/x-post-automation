@@ -7,6 +7,7 @@ from app.database import get_db
 from app import models, schemas
 from app.auth.dependencies import get_current_user
 from app.services.x_client import get_twitter_client
+from app.utils import get_user_tweet_or_404, handle_api_error
 
 router = APIRouter()
 
@@ -59,16 +60,7 @@ async def get_tweet(
     db: Session = Depends(get_db)
 ):
     """Get specific tweet"""
-    
-    tweet = db.query(models.Tweet).filter(
-        models.Tweet.id == tweet_id,
-        models.Tweet.user_id == current_user.id
-    ).first()
-    
-    if not tweet:
-        raise HTTPException(status_code=404, detail="Tweet not found")
-    
-    return tweet
+    return get_user_tweet_or_404(db, tweet_id, current_user.id)
 
 
 @router.post("/{tweet_id}/post", response_model=schemas.Tweet)
@@ -79,13 +71,7 @@ async def post_tweet_now(
 ):
     """Post tweet immediately to Twitter"""
     
-    tweet = db.query(models.Tweet).filter(
-        models.Tweet.id == tweet_id,
-        models.Tweet.user_id == current_user.id
-    ).first()
-    
-    if not tweet:
-        raise HTTPException(status_code=404, detail="Tweet not found")
+    tweet = get_user_tweet_or_404(db, tweet_id, current_user.id)
     
     if tweet.status == "posted":
         raise HTTPException(status_code=400, detail="Tweet already posted")
@@ -110,4 +96,4 @@ async def post_tweet_now(
     except Exception as e:
         tweet.status = "failed"
         db.commit()
-        raise HTTPException(status_code=500, detail=f"Failed to post: {str(e)}")
+        raise handle_api_error(e, "Failed to post", 500)
