@@ -50,7 +50,7 @@ class Metric(Base):
     replies = Column(Integer, default=0)
     impressions = Column(Integer)
     engagement_rate = Column(Float)
-    extra_json = Column(JSON, default={})
+    additional_data = Column(JSON, default={})
     
     tweet = relationship("Tweet", back_populates="metrics")
 

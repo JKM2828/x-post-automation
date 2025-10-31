@@ -27,9 +27,9 @@ async def generate_tweet_variants(
         variants = ai_generator.generate_tweet_variants(
             topic=request.topic,
             tone=request.tone,
-            num_variants=request.num_variants,
+            variant_count=request.variant_count,
             include_hashtags=request.include_hashtags,
-            include_cta=request.include_cta
+            include_call_to_action=request.include_call_to_action
         )
         
         # Save as drafts
@@ -46,8 +46,8 @@ async def generate_tweet_variants(
         
         return {"variants": variants, "metadata": {"topic": request.topic, "tone": request.tone}}
         
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+    except Exception as generation_error:
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(generation_error)}")
 
 
 @router.post("/analyze")
@@ -56,5 +56,5 @@ async def analyze_tweet(text: str, current_user: models.User = Depends(get_curre
     try:
         ai_generator = get_ai_generator()
         return ai_generator.analyze_tweet_sentiment(text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as analysis_error:
+        raise HTTPException(status_code=500, detail=str(analysis_error))

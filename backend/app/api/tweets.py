@@ -96,9 +96,9 @@ async def post_tweet_now(
     # Post to Twitter
     try:
         twitter_client = get_twitter_client(current_user.api_key)
-        result = twitter_client.post_tweet(tweet.text, tweet.media_links)
+        twitter_response = twitter_client.post_tweet(tweet.text, tweet.media_links)
         
-        tweet.tweet_id_twitter = result.get("id_str")
+        tweet.tweet_id_twitter = twitter_response.get("id_str")
         tweet.status = "posted"
         tweet.posted_at = datetime.utcnow()
         
@@ -107,7 +107,7 @@ async def post_tweet_now(
         
         return tweet
         
-    except Exception as e:
+    except Exception as posting_error:
         tweet.status = "failed"
         db.commit()
-        raise HTTPException(status_code=500, detail=f"Failed to post: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to post: {str(posting_error)}")

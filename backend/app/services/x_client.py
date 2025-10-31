@@ -21,49 +21,49 @@ class TwitterAPIClient:
     
     def post_tweet(self, text: str, media_ids: Optional[List[str]] = None) -> Dict:
         """Post a new tweet"""
-        url = f"{self.base_url}/twitter/tweet"
+        api_url = f"{self.base_url}/twitter/tweet"
         payload = {"text": text[:280]}
         if media_ids:
             payload["media_ids"] = media_ids
         
         try:
-            response = requests.post(url, json=payload, headers=self.headers)
+            response = requests.post(api_url, json=payload, headers=self.headers)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to post tweet: {str(e)}")
+        except requests.exceptions.RequestException as request_error:
+            raise Exception(f"Failed to post tweet: {str(request_error)}")
     
     def get_user_tweets(self, username: str, count: int = 10) -> List[Dict]:
         """Get recent tweets from a user"""
-        url = f"{self.base_url}/twitter/user/tweets"
+        api_url = f"{self.base_url}/twitter/user/tweets"
         params = {"userName": username, "count": count}
         
         try:
-            response = requests.get(url, params=params, headers=self.headers)
+            response = requests.get(api_url, params=params, headers=self.headers)
             response.raise_for_status()
             return response.json().get("tweets", [])
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to fetch tweets: {str(e)}")
+        except requests.exceptions.RequestException as request_error:
+            raise Exception(f"Failed to fetch tweets: {str(request_error)}")
     
     def get_tweet_metrics(self, tweet_id: str) -> Dict:
         """Get metrics for a specific tweet"""
-        url = f"{self.base_url}/twitter/tweet/metrics"
+        api_url = f"{self.base_url}/twitter/tweet/metrics"
         params = {"tweetId": tweet_id}
         
         try:
-            response = requests.get(url, params=params, headers=self.headers)
+            response = requests.get(api_url, params=params, headers=self.headers)
             response.raise_for_status()
-            data = response.json()
+            metrics_data = response.json()
             
             return {
-                "likes": data.get("like_count", 0),
-                "retweets": data.get("retweet_count", 0),
-                "replies": data.get("reply_count", 0),
-                "impressions": data.get("impression_count"),
+                "likes": metrics_data.get("like_count", 0),
+                "retweets": metrics_data.get("retweet_count", 0),
+                "replies": metrics_data.get("reply_count", 0),
+                "impressions": metrics_data.get("impression_count"),
                 "timestamp": datetime.utcnow()
             }
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to fetch metrics: {str(e)}")
+        except requests.exceptions.RequestException as request_error:
+            raise Exception(f"Failed to fetch metrics: {str(request_error)}")
 
 
 def get_twitter_client(api_key: str) -> TwitterAPIClient:
