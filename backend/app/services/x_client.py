@@ -5,6 +5,50 @@ from datetime import datetime
 from app.config import settings
 
 
+class APIClientError(Exception):
+    """Base exception for API client errors"""
+    pass
+
+
+def make_api_request(
+    method: str,
+    url: str,
+    headers: Dict,
+    params: Optional[Dict] = None,
+    json: Optional[Dict] = None,
+    error_context: str = "API request"
+) -> Dict:
+    """
+    Make an API request with standardized error handling.
+    
+    Args:
+        method: HTTP method (GET, POST, etc.)
+        url: Request URL
+        headers: Request headers
+        params: Query parameters
+        json: JSON body
+        error_context: Context for error messages
+        
+    Returns:
+        Response JSON
+        
+    Raises:
+        APIClientError: If request fails
+    """
+    try:
+        response = requests.request(
+            method=method,
+            url=url,
+            headers=headers,
+            params=params,
+            json=json
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise APIClientError(f"{error_context}: {str(e)}")
+
+
 class TwitterAPIClient:
     """
     Client for unofficial Twitter API (twitterapi.io)
@@ -26,44 +70,48 @@ class TwitterAPIClient:
         if media_ids:
             payload["media_ids"] = media_ids
         
-        try:
-            response = requests.post(url, json=payload, headers=self.headers)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to post tweet: {str(e)}")
+        return make_api_request(
+            method="POST",
+            url=url,
+            headers=self.headers,
+            json=payload,
+            error_context="Failed to post tweet"
+        )
     
     def get_user_tweets(self, username: str, count: int = 10) -> List[Dict]:
         """Get recent tweets from a user"""
         url = f"{self.base_url}/twitter/user/tweets"
         params = {"userName": username, "count": count}
         
-        try:
-            response = requests.get(url, params=params, headers=self.headers)
-            response.raise_for_status()
-            return response.json().get("tweets", [])
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to fetch tweets: {str(e)}")
+        result = make_api_request(
+            method="GET",
+            url=url,
+            headers=self.headers,
+            params=params,
+            error_context="Failed to fetch tweets"
+        )
+        return result.get("tweets", [])
     
     def get_tweet_metrics(self, tweet_id: str) -> Dict:
         """Get metrics for a specific tweet"""
         url = f"{self.base_url}/twitter/tweet/metrics"
         params = {"tweetId": tweet_id}
         
-        try:
-            response = requests.get(url, params=params, headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
-            
-            return {
-                "likes": data.get("like_count", 0),
-                "retweets": data.get("retweet_count", 0),
-                "replies": data.get("reply_count", 0),
-                "impressions": data.get("impression_count"),
-                "timestamp": datetime.utcnow()
-            }
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to fetch metrics: {str(e)}")
+        data = make_api_request(
+            method="GET",
+            url=url,
+            headers=self.headers,
+            params=params,
+            error_context="Failed to fetch metrics"
+        )
+        
+        return {
+            "likes": data.get("like_count", 0),
+            "retweets": data.get("retweet_count", 0),
+            "replies": data.get("reply_count", 0),
+            "impressions": data.get("impression_count"),
+            "timestamp": datetime.utcnow()
+        }
 
 
 def get_twitter_client(api_key: str) -> TwitterAPIClient:
