@@ -1,1 +1,101 @@
-from pydantic import BaseModel, Field\nfrom typing import Optional, List, Dict\nfrom datetime import datetime\n\n# User schemas\nclass UserBase(BaseModel):\n    username: str\n    twitter_username: Optional[str] = None\n\nclass UserCreate(UserBase):\n    api_key: str\n\nclass User(UserBase):\n    id: int\n    created_at: datetime\n    \n    class Config:\n        from_attributes = True\n\n# Tweet schemas\nclass TweetBase(BaseModel):\n    text: str = Field(..., max_length=280)\n    media_links: Optional[List[str]] = []\n\nclass TweetCreate(TweetBase):\n    scheduled_at: Optional[datetime] = None\n\nclass TweetUpdate(BaseModel):\n    text: Optional[str] = None\n    scheduled_at: Optional[datetime] = None\n    status: Optional[str] = None\n\nclass Tweet(TweetBase):\n    id: int\n    user_id: int\n    tweet_id_twitter: Optional[str] = None\n    status: str\n    created_at: datetime\n    scheduled_at: Optional[datetime] = None\n    posted_at: Optional[datetime] = None\n    generated_by_ai: bool\n    viral_score: Optional[float] = None\n    \n    class Config:\n        from_attributes = True\n\n# Metric schemas\nclass MetricBase(BaseModel):\n    likes: int = 0\n    retweets: int = 0\n    replies: int = 0\n    impressions: Optional[int] = None\n\nclass Metric(MetricBase):\n    id: int\n    tweet_id: int\n    timestamp: datetime\n    engagement_rate: Optional[float] = None\n    \n    class Config:\n        from_attributes = True\n\n# Campaign schemas\nclass CampaignBase(BaseModel):\n    name: str\n    description: Optional[str] = None\n    recurrence: Optional[str] = None\n    slots: Optional[List[Dict]] = []\n\nclass CampaignCreate(CampaignBase):\n    pass\n\nclass Campaign(CampaignBase):\n    id: int\n    user_id: int\n    active: bool\n    created_at: datetime\n    \n    class Config:\n        from_attributes = True\n\n# AI Generation schemas\nclass AIGenerateRequest(BaseModel):\n    topic: str\n    tone: str = "professional"\n    num_variants: int = Field(3, ge=1, le=5)\n    max_length: int = Field(280, le=280)\n    include_hashtags: bool = True\n    include_cta: bool = True\n\nclass AIGenerateResponse(BaseModel):\n    variants: List[Dict]\n    metadata: Dict\n\n# Analytics schemas\nclass AnalyticsSummary(BaseModel):\n    total_tweets: int\n    total_engagement: int\n    avg_engagement_rate: float\n    top_tweet: Optional[Tweet] = None\n    best_time_slots: List[Dict]
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict
+from datetime import datetime
+
+# User schemas
+class UserBase(BaseModel):
+    username: str
+    twitter_username: Optional[str] = None
+
+class UserCreate(UserBase):
+    api_key: str
+
+class User(UserBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Tweet schemas
+class TweetBase(BaseModel):
+    text: str = Field(..., max_length=280)
+    media_links: Optional[List[str]] = []
+
+class TweetCreate(TweetBase):
+    scheduled_at: Optional[datetime] = None
+
+class TweetUpdate(BaseModel):
+    text: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
+    status: Optional[str] = None
+
+class Tweet(TweetBase):
+    id: int
+    user_id: int
+    tweet_id_twitter: Optional[str] = None
+    status: str
+    created_at: datetime
+    scheduled_at: Optional[datetime] = None
+    posted_at: Optional[datetime] = None
+    generated_by_ai: bool
+    viral_score: Optional[float] = None
+    
+    class Config:
+        from_attributes = True
+
+# Metric schemas
+class MetricBase(BaseModel):
+    likes: int = 0
+    retweets: int = 0
+    replies: int = 0
+    impressions: Optional[int] = None
+
+class Metric(MetricBase):
+    id: int
+    tweet_id: int
+    timestamp: datetime
+    engagement_rate: Optional[float] = None
+    
+    class Config:
+        from_attributes = True
+
+# Campaign schemas
+class CampaignBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    recurrence: Optional[str] = None
+    slots: Optional[List[Dict]] = []
+
+class CampaignCreate(CampaignBase):
+    pass
+
+class Campaign(CampaignBase):
+    id: int
+    user_id: int
+    active: bool
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# AI Generation schemas
+class AIGenerateRequest(BaseModel):
+    topic: str
+    tone: str = "professional"
+    num_variants: int = Field(3, ge=1, le=5)
+    max_length: int = Field(280, le=280)
+    include_hashtags: bool = True
+    include_cta: bool = True
+
+class AIGenerateResponse(BaseModel):
+    variants: List[Dict]
+    metadata: Dict
+
+# Analytics schemas
+class AnalyticsSummary(BaseModel):
+    total_tweets: int
+    total_engagement: int
+    avg_engagement_rate: float
+    top_tweet: Optional[Tweet] = None
+    best_time_slots: List[Dict]
