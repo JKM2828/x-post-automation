@@ -113,7 +113,7 @@ Viral score = predicted engagement potential (0-1)"""
         for line in lines[:num_variants]:
             # Clean up markdown, numbers, etc
             clean = line.lstrip(strip_chars).rstrip('"')
-            if 10 < len(clean) <= 280:
+            if len(clean) > 10 and len(clean) <= 280:
                 variants.append({
                     'text': clean,
                     'viral_score': round(random.uniform(0.6, 0.9), 2)
@@ -138,8 +138,11 @@ Respond with JSON:
             return {"sentiment": "neutral", "engagement_score": 0.5, "suggestions": "N/A"}
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=128)
 def get_ai_generator(api_key: Optional[str] = None) -> GeminiAIGenerator:
-    """Factory function with caching to avoid repeated initialization"""
+    """Factory function with caching to avoid repeated initialization
+    
+    Caches up to 128 different API key configurations to handle multiple users efficiently
+    """
     key = api_key or settings.GEMINI_API_KEY
     return GeminiAIGenerator(key)

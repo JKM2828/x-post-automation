@@ -43,7 +43,7 @@ async def generate_tweet_variants(
             )
             for variant in variants
         ]
-        db.bulk_save_objects(tweets)
+        db.add_all(tweets)
         db.commit()
         
         return {"variants": variants, "metadata": {"topic": request.topic, "tone": request.tone}}
