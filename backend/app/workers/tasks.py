@@ -14,10 +14,7 @@ logger = logging.getLogger(__name__)
 def get_db():
     """Get database session for tasks"""
     db = SessionLocal()
-    try:
-        return db
-    finally:
-        db.close()
+    return db
 
 
 @celery_app.task(name='app.workers.tasks.post_scheduled_tweets')

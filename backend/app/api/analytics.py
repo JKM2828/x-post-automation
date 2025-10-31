@@ -33,7 +33,7 @@ async def get_analytics_summary(
         func.sum(models.Metric.likes).label("total_likes"),
         func.sum(models.Metric.retweets).label("total_retweets"),
         func.sum(models.Metric.replies).label("total_replies"),
-        func.avg(models.Metric.engagement_rate).label("avg_engagement")
+        func.coalesce(func.avg(models.Metric.engagement_rate), 0).label("avg_engagement")
     ).join(
         models.Tweet
     ).filter(
