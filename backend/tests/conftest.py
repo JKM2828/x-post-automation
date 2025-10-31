@@ -30,12 +30,18 @@ def override_get_db():
 @pytest.fixture
 def client():
     Base.metadata.create_all(bind=engine)
+    
+    # Override database dependency
     app.dependency_overrides[get_db] = override_get_db
+    
+    # Disable startup event for tests
+    app.router.on_startup = []
     
     with TestClient(app) as test_client:
         yield test_client
     
     Base.metadata.drop_all(bind=engine)
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture

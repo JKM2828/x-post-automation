@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.database import get_db
-from app import models
+from app import models, schemas
 from app.auth.dependencies import create_access_token
 
 router = APIRouter()
@@ -19,7 +19,7 @@ class TokenResponse(BaseModel):
     token_type: str
 
 
-@router.post("/register", response_model=models.User)
+@router.post("/register", response_model=schemas.User)
 async def register(
     username: str,
     twitter_username: str = None,
