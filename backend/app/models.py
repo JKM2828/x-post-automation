@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -38,6 +38,13 @@ class Tweet(Base):
     user = relationship("User", back_populates="tweets")
     metrics = relationship("Metric", back_populates="tweet", cascade="all, delete-orphan")
     campaign = relationship("Campaign", back_populates="tweets")
+    
+    # Composite indexes for common query patterns
+    __table_args__ = (
+        Index('idx_user_status_created', 'user_id', 'status', 'created_at'),
+        Index('idx_user_created', 'user_id', 'created_at'),
+        Index('idx_status_scheduled', 'status', 'scheduled_at'),
+    )
 
 class Metric(Base):
     __tablename__ = "metrics"
@@ -53,6 +60,11 @@ class Metric(Base):
     extra_json = Column(JSON, default={})
     
     tweet = relationship("Tweet", back_populates="metrics")
+    
+    # Index for common metric queries
+    __table_args__ = (
+        Index('idx_tweet_timestamp', 'tweet_id', 'timestamp'),
+    )
 
 class Campaign(Base):
     __tablename__ = "campaigns"

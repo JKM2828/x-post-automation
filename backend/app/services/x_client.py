@@ -11,6 +11,9 @@ class TwitterAPIClient:
     Much cheaper alternative to official X API v2
     """
     
+    # Request timeout in seconds (connect timeout, read timeout)
+    TIMEOUT = (5, 30)
+    
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://api.twitterapi.io"
@@ -18,6 +21,9 @@ class TwitterAPIClient:
             'x-api-key': self.api_key,
             'Content-Type': 'application/json'
         }
+        # Use session for connection pooling and keep-alive
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
     
     def post_tweet(self, text: str, media_ids: Optional[List[str]] = None) -> Dict:
         """Post a new tweet"""
@@ -27,7 +33,7 @@ class TwitterAPIClient:
             payload["media_ids"] = media_ids
         
         try:
-            response = requests.post(url, json=payload, headers=self.headers)
+            response = self.session.post(url, json=payload, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -39,7 +45,7 @@ class TwitterAPIClient:
         params = {"userName": username, "count": count}
         
         try:
-            response = requests.get(url, params=params, headers=self.headers)
+            response = self.session.get(url, params=params, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json().get("tweets", [])
         except requests.exceptions.RequestException as e:
@@ -51,7 +57,7 @@ class TwitterAPIClient:
         params = {"tweetId": tweet_id}
         
         try:
-            response = requests.get(url, params=params, headers=self.headers)
+            response = self.session.get(url, params=params, timeout=self.TIMEOUT)
             response.raise_for_status()
             data = response.json()
             
@@ -64,6 +70,10 @@ class TwitterAPIClient:
             }
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to fetch metrics: {str(e)}")
+    
+    def close(self):
+        """Close the session to release resources"""
+        self.session.close()
 
 
 def get_twitter_client(api_key: str) -> TwitterAPIClient:

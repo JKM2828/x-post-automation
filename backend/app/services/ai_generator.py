@@ -2,6 +2,7 @@ import google.generativeai as genai
 from typing import List, Dict, Optional
 import json
 import random
+from functools import lru_cache
 
 from app.config import settings
 
@@ -82,12 +83,12 @@ Viral score = predicted engagement potential (0-1)"""
         """Parse Gemini response and extract tweets"""
         
         try:
-            # Try to extract JSON from response
+            # Try to extract JSON from response (optimized search)
             start = response_text.find('[')
-            end = response_text.rfind(']') + 1
+            end = response_text.rfind(']')
             
             if start >= 0 and end > start:
-                json_str = response_text[start:end]
+                json_str = response_text[start:end + 1]
                 variants = json.loads(json_str)
                 
                 # Validate and limit
@@ -102,12 +103,16 @@ Viral score = predicted engagement potential (0-1)"""
     def _fallback_parse(self, text: str, num_variants: int) -> List[Dict]:
         """Fallback parser if JSON fails"""
         
-        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        # Pre-compile stripping characters for efficiency
+        strip_chars = '0123456789.-*# "'
         variants = []
+        
+        # Split and filter lines in one pass
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
         
         for line in lines[:num_variants]:
             # Clean up markdown, numbers, etc
-            clean = line.lstrip('0123456789.-*# ').strip('"')
+            clean = line.lstrip(strip_chars).rstrip('"')
             if len(clean) > 10 and len(clean) <= 280:
                 variants.append({
                     'text': clean,
@@ -133,7 +138,11 @@ Respond with JSON:
             return {"sentiment": "neutral", "engagement_score": 0.5, "suggestions": "N/A"}
 
 
+@lru_cache(maxsize=128)
 def get_ai_generator(api_key: Optional[str] = None) -> GeminiAIGenerator:
-    """Factory function"""
+    """Factory function with caching to avoid repeated initialization
+    
+    Caches up to 128 different API key configurations to handle multiple users efficiently
+    """
     key = api_key or settings.GEMINI_API_KEY
     return GeminiAIGenerator(key)

@@ -38,17 +38,20 @@ async def create_tweet(
 async def get_tweets(
     status: Optional[str] = None,
     limit: int = 50,
+    offset: int = 0,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all tweets for current user"""
+    """Get all tweets for current user with pagination"""
     
+    # Build query with indexed columns first for better performance
     query = db.query(models.Tweet).filter(models.Tweet.user_id == current_user.id)
     
     if status:
         query = query.filter(models.Tweet.status == status)
     
-    tweets = query.order_by(models.Tweet.created_at.desc()).limit(limit).all()
+    # Use indexed order and apply pagination
+    tweets = query.order_by(models.Tweet.created_at.desc()).limit(limit).offset(offset).all()
     return tweets
 
 
